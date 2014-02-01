@@ -7,6 +7,6 @@ namespace Net.DDP.Client
 {
     public interface IDataSubscriber
     {
-        void DataReceived(dynamic data);
+        void DataReceived(string data);
     }
 }

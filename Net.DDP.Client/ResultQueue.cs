@@ -10,17 +10,20 @@ namespace Net.DDP.Client
     {
         private static ManualResetEvent _enqueuedEvent;
         private static Thread _workerThread;
-        private Queue<string> _jsonItemsQueue;
+        private readonly Queue<string> _jsonItemsQueue;
         private string _currentJsongItem;
-        private JsonDeserializeHelper _serializeHelper;
+        //private readonly JsonDeserializeHelper _serializeHelper;
+        private IDataSubscriber _subscriber;
 
         public ResultQueue(IDataSubscriber subscriber)
         {
-            this._jsonItemsQueue = new Queue<string>();
-            this._serializeHelper = new JsonDeserializeHelper(subscriber);
+            _subscriber = subscriber;
+
+            _jsonItemsQueue = new Queue<string>();
+            //_serializeHelper = new JsonDeserializeHelper(subscriber);
 
             _enqueuedEvent = new ManualResetEvent(false);
-            _workerThread = new Thread(new ThreadStart(PerformDeserilization));
+            _workerThread = new Thread(PerformDeserilization);
             _workerThread.Start();
         }
 
@@ -58,7 +61,7 @@ namespace Net.DDP.Client
             if (_workerThread.ThreadState == ThreadState.Stopped)
             {
                 _workerThread.Abort();
-                _workerThread = new Thread(new ThreadStart(PerformDeserilization));
+                _workerThread = new Thread(PerformDeserilization);
                 _workerThread.Start();
             }
         }
@@ -67,7 +70,7 @@ namespace Net.DDP.Client
         {
             while (Dequeue())
             {
-                _serializeHelper.Deserialize(_currentJsongItem);
+                _subscriber.DataReceived(_currentJsongItem);
             }
         }
     }
